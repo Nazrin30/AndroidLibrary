@@ -41,45 +41,30 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 
-afterEvaluate {
-    android.libraryVariants.each {variant ->
-        publishing.publications.create(variant.name, MavenPublication) {
-            from components.findByName(variant.name)
-            artifact androidJavadocsJar
-            artifact androidSourcesJar.archivePath
-
-            groupId 'com.example.sdk-library'
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.example.sdk-library'
             artifactId = 'sdk-library'
-            version '1.3.0'
-        }
+            version = '2.0'
 
+            afterEvaluate {
+                from components.release
+            }
         }
     }
-
-
-task androidJavadocs (type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-
-    classpath+=project.files(android.getBootClasspath().join(File.pathSeparator))
-    android.libraryVariants.all { variant ->
-        owner.classpath+=variant.javaCompileProvider.get().classpath
-    }
-
-
-// excluding a specific class from being documented
-//exclude '**/NetworkStatusChecker java'
-    options {
-        // show only Protected & Public
-        memberLevel = JavadocMemberLevel.PROTECTED
+    repositories {
+        maven {
+            name = 'myrepo'
+            url = "${project.buildDir}/repo"
+        }
     }
 }
 
-task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-    archiveClassifier.set('javadoc')
-    from androidJavadocs.destinationDir
-}
 
-task androidSourcesJar(type: Jar){
-    archiveClassifier.set('sources')
-    from android.sourceSets.main.java.srcDirs
+tasks.register('generateRepo', Zip) {
+    def publishTask = tasks.named('publishReleasePublicationToMyrepoRepository')
+    from publishTask.map { it.getRepository().getUrl() }
+    into 'sdk-library'
+    archiveFileName.set('sdk-library.zip')
 }
