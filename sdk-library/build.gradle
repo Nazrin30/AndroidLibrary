@@ -44,11 +44,9 @@ dependencies {
 afterEvaluate {
     android.libraryVariants.each {variant ->
         publishing.publications.create(variant.name, MavenPublication) {
-
-            from components.findByName(variant .name)
-
-//            artifact android.Javadocs.Jar
-//            artifact androidSourcesJar
+            from components.findByName(variant.name)
+            artifact androidJavadocsJar
+            artifact androidSourcesJar.archivePath
 
             groupId 'com.example.sdk-library'
             artifactId = 'sdk-library'
@@ -59,29 +57,29 @@ afterEvaluate {
     }
 
 
-//task androidJavadocs (type: Javadoc) {
-//    source = android.sourceSets.main.java.srcDirs
-//
-//    classpath+=project.files(android.getBootClasspath().join(File.pathSeparator))
-//    android.libraryVariants.all { variant ->
-//        owner.classpath+=variant.javaCompileProvider.get().classpath
-//    }
-//
-//
-//// excluding a specific class from being documented
-////exclude '**/NetworkStatusChecker java'
-//    options {
-//        // show only Protected & Public
-//        memberLevel = JavadocMemberLevel.PROTECTED
-//    }
-//}
-//
-//task androidJavadocsJar(type:Jar,dependsOn:ardroidJavadocs){
-//    archiveClassifier.set('javadoc')
-//    from androidJavadocs.destinationDir
-//}
-//
-//task androidSourcesJar(type: Jar){
-//    archiveClassifier.set('sources')
-//    from android.sourceSets.main.java.srcDirs
-//}
+task androidJavadocs (type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+
+    classpath+=project.files(android.getBootClasspath().join(File.pathSeparator))
+    android.libraryVariants.all { variant ->
+        owner.classpath+=variant.javaCompileProvider.get().classpath
+    }
+
+
+// excluding a specific class from being documented
+//exclude '**/NetworkStatusChecker java'
+    options {
+        // show only Protected & Public
+        memberLevel = JavadocMemberLevel.PROTECTED
+    }
+}
+
+task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+    archiveClassifier.set('javadoc')
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar){
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
